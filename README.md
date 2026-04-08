@@ -39,3 +39,21 @@ i r
 b
 e
 ```
+
+## Usage
+
+```bash
+./mordor.js [options] [file]
+```
+
+If no file is provided, it reads from **stdin** (piped text) or defaults to the internal "MordorJS" manifesto.
+
+## Options
+
+| Option | Long Form | Description |
+| :--- | :--- | :--- |
+| `-w <num>` | `--wide <num>` | **Wrap into Columns:** Re-wraps the text into exactly `<num>` vertical strips. Words are preserved and distributed evenly. |
+| `-s` | | **Spacing:** Adds an empty space strip between each data strip for better readability. |
+| `-r [num]` | `--random [num]` | **Randomize:** Adds random vertical spacing (0 to `num`) before the first word and between every word in a strip. Default `num` is 3. |
+| `-b64` | `--base64` | **Base64 Mode:** Encodes input to Base64 first. Uses "virtual words" (2-7 chars) to allow wrapping and randomization. |
+| `-c` | `--copy` | **Clipboard:** Automatically copies the final vertical output to your system clipboard. |
