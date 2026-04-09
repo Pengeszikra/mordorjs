@@ -47,8 +47,8 @@ function virtualizeWords(str) {
  * Distributes words into a target number of strips using a more balanced approach.
  */
 function wrapToStrips(text, targetStripCount) {
-    // Clean tabs and split into words
-    const words = text.replace(/\t/g, ' ').split(/\s+/).filter(w => w.length > 0);
+    // Clean tabs to double spaces and split into words
+    const words = text.replace(/\t/g, '  ').split(/\s+/).filter(w => w.length > 0);
     
     if (words.length === 0) return Array(targetStripCount).fill('');
     if (targetStripCount <= 1) return [words.join(' ')];
@@ -110,12 +110,13 @@ function applyRandomSpacing(strip, randomMax) {
 }
 
 function verticalize(text, stripCount, addSeparator, randomMax, isBase64) {
-    let processedText = text;
+    // Clean tabs to double spaces
+    const cleanText = text.replace(/\t/g, '  ');
+    
+    let processedText = cleanText;
     
     if (isBase64) {
-        // Convert to Base64
-        processedText = Buffer.from(text).toString('base64');
-        // Virtualize words so randomization and wrapping have boundaries
+        processedText = Buffer.from(cleanText).toString('base64');
         processedText = virtualizeWords(processedText);
     }
 
@@ -123,12 +124,7 @@ function verticalize(text, stripCount, addSeparator, randomMax, isBase64) {
     if (stripCount) {
         strips = wrapToStrips(processedText, stripCount);
     } else {
-        // If not wrapping, we still need to split by spaces if it was base64 virtualized
-        strips = isBase64 ? processedText.split('\n') : processedText.split('\n');
-        // Note: For Base64 without -w, we might just treat it as one giant line if we don't handle it
-        if (isBase64 && !stripCount) {
-             strips = [processedText];
-        }
+        strips = processedText.split('\n');
     }
 
     if (randomMax !== null) {
@@ -154,6 +150,37 @@ function verticalize(text, stripCount, addSeparator, randomMax, isBase64) {
     return output;
 }
 
+/**
+ * Creates a runnable vertical JS "Mordor" file using start and end templates.
+ */
+function generateMordorJS(jsCode) {
+    const startPath = 'mojs-start.js';
+    const endPath = 'mojs-end.js';
+
+    if (!fs.existsSync(startPath) || !fs.existsSync(endPath)) {
+        throw new Error(`Required template files ${startPath} or ${endPath} not found.`);
+    }
+
+    const startTemplate = fs.readFileSync(startPath, 'utf8');
+    const endTemplate = fs.readFileSync(endPath, 'utf8');
+
+    // Normalize newlines, tabs, and escape backticks (backtick -> 0x1F)
+    const shebangStripped = jsCode.startsWith('#!') 
+        ? jsCode.slice(jsCode.indexOf('\n') + 1) 
+        : jsCode;
+    const unixCode = shebangStripped.replace(/\r\n?/g, '\n');
+    const tablessCode = unixCode.replace(/\t/g, '  ');
+    const commentSafeCode = tablessCode.replace(/\/\/.*(?=\n|$)/g, (m) => `/*${m.slice(2)}*/`);
+    const backslashSafeCode = commentSafeCode.replace(/\\/g, '\\\\').replace(/\$\{/g, '\\${');
+    const escapedCode = backslashSafeCode.replace(/`/g, '\x1f');
+
+    // Verticalize the escaped code: every character followed by a newline
+    const verticalizedCode = escapedCode.split('').join('\n') + '\n';
+
+    // Concatenate the fragments
+    return startTemplate + verticalizedCode + endTemplate;
+}
+
 function main() {
     const args = process.argv.slice(2);
     let stripCount = null;
@@ -161,6 +188,7 @@ function main() {
     let shouldCopy = false;
     let randomMax = null;
     let isBase64 = false;
+    let isMordorJS = false;
     let filePath = null;
 
     for (let i = 0; i < args.length; i++) {
@@ -173,6 +201,8 @@ function main() {
             shouldCopy = true;
         } else if (args[i] === '-b64' || args[i] === '--base64') {
             isBase64 = true;
+        } else if (args[i] === '-mjs' || args[i] === '--mordorjs') {
+            isMordorJS = true;
         } else if (args[i] === '-r' || args[i] === '--random') {
             const nextArg = args[i + 1];
             if (nextArg && !isNaN(parseInt(nextArg, 10)) && !nextArg.startsWith('-')) {
@@ -186,39 +216,13 @@ function main() {
         }
     }
 
-    const defaultText = `MordorJS — One Program to Rule Them All
-
-The Eye revealed a shocking truth:
-this hidden gem has been lying in plain sight all along — we just never used it.
-
-For decades, we’ve been measuring developer productivity in lines of code.
-
-We pretend we don’t.
-We say things like maintainability, clarity, simplicity.
-But somewhere in the background, LOC still whispers:
-
-more lines = more work = more value
-
-So I decided to take this idea seriously.
-
-Very seriously.
-
-The Problem Nobody Noticed
-
-Modern code wastes horizontal space.
-
-It assumes:
-
-a wide screen
-a cooperative editor
-a human reading left to right
-
-Like it’s still 1970 and we’re using typewriters.
-
-But what if that assumption is wrong?`;
-
     const processResult = (text) => {
-        const result = verticalize(text, stripCount, addSeparator, randomMax, isBase64);
+        let result;
+        if (isMordorJS) {
+            result = generateMordorJS(text);
+        } else {
+            result = verticalize(text, stripCount, addSeparator, randomMax, isBase64);
+        }
         process.stdout.write(result);
         if (shouldCopy) {
             copyToClipboard(result);
@@ -242,11 +246,9 @@ But what if that assumption is wrong?`;
             processResult(data);
         });
     } else {
-        if (args.length === 0) {
-            console.log("Usage: node mordor.js [-w|--wide number] [-s] [-c|--copy] [-r|--random [number]] [-b64|--base64] [file]");
-            console.log("\nDefaulting to MordorJS text:\n");
-        }
-        processResult(defaultText);
+        console.error("Warning: no input provided. Pass a file or pipe text via stdin.");
+        console.log("Usage: node mordor.js [-w|--wide number] [-s] [-c|--copy] [-r|--random [number]] [-b64|--base64] [-mjs] [file]");
+        process.exit(1);
     }
 }
 
