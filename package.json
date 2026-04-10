@@ -1,0 +1,32 @@
+{
+  "name": "mordorjs",
+  "version": "0.0.1",
+  "description": "One Program to Rule Them All",
+  "main": "src/index.js",
+  "bin": {
+    "mordorjs": "src/cli.js"
+  },
+  "scripts": {
+    "test": "node src/cli.js example.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Pengeszikra/mordorjs.git"
+  },
+  "keywords": [
+    "vertical",
+    "obfuscation",
+    "mordor",
+    "column",
+    "cli"
+  ],
+  "author": "Peter Vivo",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Pengeszikra/mordorjs/issues"
+  },
+  "homepage": "https://github.com/Pengeszikra/mordorjs#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
