@@ -4,10 +4,10 @@
   "description": "One Program to Rule Them All",
   "main": "src/index.js",
   "bin": {
-    "mordorjs": "src/cli.js"
+    "mordorjs": "mordor.js"
   },
   "scripts": {
-    "test": "node src/cli.js example.js"
+    "test": "node mordor.js mordor.js -w 61 -s -c -r 4"
   },
   "repository": {
     "type": "git",
