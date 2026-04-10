@@ -1,19 +1,5 @@
-c
-o
-n
-s
-o
-l
-e
-.
-l
-o
-g
-(
-1
-2
-3
-7
-9
-)  
-;
+const MDJS = "M||D||JS";
+
+console.log(MDJS);
+
+console.log(" Another message");

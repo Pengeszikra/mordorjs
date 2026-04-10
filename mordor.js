@@ -2,7 +2,7 @@
 
 /**
  * MordorJS - One Program to Rule Them All
- * 
+ *
  * This program transforms input text into vertical columns.
  * Each input line (or wrapped strip) becomes a 1-character wide column.
  */
@@ -36,7 +36,7 @@ function virtualizeWords(str) {
     let i = 0;
     while (i < str.length) {
         // Virtual word length between 2 and 7 as requested
-        const len = Math.floor(Math.random() * 6) + 2; 
+        const len = Math.floor(Math.random() * 6) + 2;
         words.push(str.substring(i, i + len));
         i += len;
     }
@@ -49,12 +49,12 @@ function virtualizeWords(str) {
 function wrapToStrips(text, targetStripCount) {
     // Clean tabs to double spaces and split into words
     const words = text.replace(/\t/g, '  ').split(/\s+/).filter(w => w.length > 0);
-    
+
     if (words.length === 0) return Array(targetStripCount).fill('');
     if (targetStripCount <= 1) return [words.join(' ')];
 
     const totalContentLength = words.reduce((acc, w) => acc + w.length, 0) + words.length - 1;
-    
+
     const strips = [];
     let wordIndex = 0;
     let remainingContentLength = totalContentLength;
@@ -62,7 +62,7 @@ function wrapToStrips(text, targetStripCount) {
     for (let i = 0; i < targetStripCount; i++) {
         const remainingStrips = targetStripCount - i;
         const targetForThisStrip = remainingContentLength / remainingStrips;
-        
+
         let currentStripWords = [];
         let currentStripLength = 0;
 
@@ -70,10 +70,10 @@ function wrapToStrips(text, targetStripCount) {
             const word = words[wordIndex];
             const wordLenWithSpace = (currentStripWords.length > 0 ? 1 : 0) + word.length;
 
-            if (remainingStrips === 1 || 
-                currentStripLength === 0 || 
+            if (remainingStrips === 1 ||
+                currentStripLength === 0 ||
                 Math.abs(currentStripLength + wordLenWithSpace - targetForThisStrip) < Math.abs(currentStripLength - targetForThisStrip)) {
-                
+
                 currentStripWords.push(word);
                 currentStripLength += wordLenWithSpace;
                 wordIndex++;
@@ -109,12 +109,12 @@ function applyRandomSpacing(strip, randomMax) {
     return result;
 }
 
-function verticalize(text, stripCount, addSeparator, randomMax, isBase64) {
+function verticalize(text, stripCount=null, addSeparator=null, randomMax=null, isBase64=null) {
     // Clean tabs to double spaces
     const cleanText = text.replace(/\t/g, '  ');
-    
+
     let processedText = cleanText;
-    
+
     if (isBase64) {
         processedText = Buffer.from(cleanText).toString('base64');
         processedText = virtualizeWords(processedText);
@@ -130,23 +130,23 @@ function verticalize(text, stripCount, addSeparator, randomMax, isBase64) {
     if (randomMax !== null) {
         strips = strips.map(strip => applyRandomSpacing(strip, randomMax));
     }
-    
+
     const maxLength = Math.max(...strips.map(s => s.length));
     let output = '';
-    
+
     for (let i = 0; i < maxLength; i++) {
         let row = '';
         for (let j = 0; j < strips.length; j++) {
             const strip = strips[j];
             row += (strip[i] || ' ');
-            
+
             if (addSeparator && j < strips.length - 1) {
                 row += ' ';
             }
         }
         output += row.trimEnd() + '\n';
     }
-    
+
     return output;
 }
 
@@ -154,8 +154,8 @@ function verticalize(text, stripCount, addSeparator, randomMax, isBase64) {
  * Creates a runnable vertical JS "Mordor" file using start and end templates.
  */
 function generateMordorJS(jsCode) {
-    const startPath = 'mojs-start.js';
-    const endPath = 'mojs-end.js';
+    const startPath = 'tomojs1.js';
+    const endPath = 'tomojs2.js';
 
     if (!fs.existsSync(startPath) || !fs.existsSync(endPath)) {
         throw new Error(`Required template files ${startPath} or ${endPath} not found.`);
@@ -165,20 +165,19 @@ function generateMordorJS(jsCode) {
     const endTemplate = fs.readFileSync(endPath, 'utf8');
 
     // Normalize newlines, tabs, and escape backticks (backtick -> 0x1F)
-    const shebangStripped = jsCode.startsWith('#!') 
-        ? jsCode.slice(jsCode.indexOf('\n') + 1) 
-        : jsCode;
-    const unixCode = shebangStripped.replace(/\r\n?/g, '\n');
-    const tablessCode = unixCode.replace(/\t/g, '  ');
-    const commentSafeCode = tablessCode.replace(/\/\/.*(?=\n|$)/g, (m) => `/*${m.slice(2)}*/`);
-    const backslashSafeCode = commentSafeCode.replace(/\\/g, '\\\\').replace(/\$\{/g, '\\${');
-    const escapedCode = backslashSafeCode.replace(/`/g, '\x1f');
+    const escapedCode = jsCode
+      .replace(/`/g, '\x1f')
+      // .replace(/(.+)[^;]\n/g,'$1;\n')
+    ;
 
-    // Verticalize the escaped code: every character followed by a newline
-    const verticalizedCode = escapedCode.split('').join('\n') + '\n';
+    // Verticalize the escaped code
+    const verticalizedCode = verticalize(escapedCode,1);
+    const startVert = verticalize(startTemplate,1);
+    const endVert = verticalize(endTemplate,1);
 
+    // return verticalizedCode;
     // Concatenate the fragments
-    return startTemplate + verticalizedCode + endTemplate;
+    return startVert + verticalizedCode + endVert;
 }
 
 function main() {
@@ -194,7 +193,7 @@ function main() {
     for (let i = 0; i < args.length; i++) {
         if (args[i] === '-w' || args[i] === '--wide') {
             stripCount = parseInt(args[i + 1], 10);
-            i++; 
+            i++;
         } else if (args[i] === '-s') {
             addSeparator = true;
         } else if (args[i] === '-c' || args[i] === '--copy') {
@@ -209,7 +208,7 @@ function main() {
                 randomMax = parseInt(nextArg, 10);
                 i++;
             } else {
-                randomMax = 3; 
+                randomMax = 3;
             }
         } else if (!filePath && !args[i].startsWith('-')) {
             filePath = args[i];
