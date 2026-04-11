@@ -1,27 +1,24 @@
-/**
- * MordorJS - the world first real 1D programming language
- *
- * this program can generate mordorjs code as .cjs file
- * this program can generate mordor-code
- * this program can generate mordor-porject
- */
+#!/usr/bin/env node
+
+/** MordorJS - the world's first real 1W (1-character-wide) programming language. Transforms any JS file into a vertical, executable format where each character occupies its own line. */
 
 const fs = require('fs');
 const { spawnSync } = require('child_process');
 
+/** @returns {string} Verticalized `code-begin.js` (base64-embedded), opens the T template literal and defines single-char variable bindings. */
 function codeBegin() {
   return Buffer.from('WwosCmMKLAosCmUKLAosCmYKLAosCmgKLAosCmkKLAosCmoKLAosCmwKLAosCm0KLAosCm4KLAosCm8KLAosCnAKLAosCnIKLAosCnMKLAosCnQKLAosCnUKLAosCmEKLAosCmQKLAosCmcKLAosClMKLAosCkMKLAosClgKLAosClkKLAosCloKLAosCkQKXQo9CmAKYwplCmYKaAppCmoKbAptCm4KbwpwCnIKcwp0CnUKYQpkCmcKUwpDCigKKQogCi4KYAo7CkEKPQo5CisKMQo7Ck8KPQpzCisKbworCnIKKwp0CjsKSwo9CmMKKwpvCisKbgorCnMKKwp0CisKcgorCnUKKwpjCisKdAorCm8KKwpyCjsKUAo9CnMKKwpwCisKbAorCmkKKwp0CjsKSgo9CmoKKwpvCisKaQorCm4KOwpGCj0KWwpdClsKTwpdClsKSwpdCjsKUgo9CnIKKwplCisKdAorCnUKKwpyCisKbgorCloKKwpTCisKdAorCnIKKwppCisKbgorCmcKKwpECisKZgorCnIKKwpvCisKbQorCkMKKwpoCisKYQorCnIKKwpDCisKbworCmQKKwplCisKWAo7CkUKPQpbCl0KKwpbCl0KOwpOCj0KYApgCjsKdwo9CkYKKApSCisKKApBCioKMwotCjEKKQorClkKKQooCikKOwpCCj0KRgooClIKKwpBCioKMworClkKKQooCikKOwpRCj0KRgooClIKKwooCkEKKgozCisKMQopCisKWQopCigKKQo7ClQKPQpgCg==','base64').toString();
 }
 
+/** @returns {string} Verticalized `code-end.js` (base64-embedded), closes T, decodes the source and evaluates it via `new Function`. */
 function codeEnd() {
   return Buffer.from('YAo7CkcKPQpGCigKUgorCkEKKwpZCikKKAopCjsKTQo9ClQKWwpQCl0KKApHCikKWwpKCl0KKApFCikKOwpWCj0KRgooClIKKwooCkEKKgo5CisKNgopCisKWQopCigKKQo7ClcKPQpGCigKUgorCigKQQoqCjkKKwoyCikKKwpZCikKKAopCjsKTQo9Ck0KWwpQCl0KKApRCikKWwpKCl0KKApWCikKWwpQCl0KKAp3CikKWwpKCl0KKApXCikKWwpQCl0KKApCCikKWwpKCl0KKApHCikKOwpGCigKTQopCigKKQo7Cg==','base64').toString();
 }
 
-const [ALIAS_BACKSLASH, ALIAS_BACKTICK, ALIAS_NEWLINE] = `\x1d\x1e\x1f`;
+/** Encoding sentinel characters (U+001D, U+001E, U+001F) used to safely represent `\`, `\n`, and `` ` `` inside the 1W template literal. */
+const [ALIAS_BACKSLASH, ALIAS_NEWLINE, ALIAS_BACKTICK] = `\x1d\x1e\x1f`;
 
-/**
- * Copies text to the system clipboard based on the platform.
- */
+/** @param {string} text - Copies text to the system clipboard (macOS/Windows/Linux). */
 function copyToClipboard(text) {
     try {
         if (process.platform === 'darwin') {
@@ -29,7 +26,6 @@ function copyToClipboard(text) {
         } else if (process.platform === 'win32') {
             spawnSync('clip', { input: text });
         } else {
-            // Default to xclip for Linux/Unix
             spawnSync('xclip', ['-selection', 'clipboard'], { input: text });
         }
     } catch (err) {
@@ -37,14 +33,11 @@ function copyToClipboard(text) {
     }
 }
 
-/**
- * Splits a continuous string into "virtual words" of random lengths.
- */
+/** @param {string} str - Splits a string into pseudo-words of random length (2–7 chars) joined by spaces. @returns {string} */
 function virtualizeWords(str) {
     let words = [];
     let i = 0;
     while (i < str.length) {
-        // Virtual word length between 2 and 7 as requested
         const len = Math.floor(Math.random() * 6) + 2;
         words.push(str.substring(i, i + len));
         i += len;
@@ -52,11 +45,8 @@ function virtualizeWords(str) {
     return words.join(' ');
 }
 
-/**
- * Distributes words into a target number of strips using a more balanced approach.
- */
+/** @param {string} text @param {number} targetStripCount - Distributes words into N balanced vertical strips. @returns {string[]} */
 function wrapToStrips(text, targetStripCount) {
-    // Clean tabs to double spaces and split into words
     const words = text.replace(/\t/g, '  ').split(/\s+/).filter(w => w.length > 0);
 
     if (words.length === 0) return Array(targetStripCount).fill('');
@@ -97,31 +87,24 @@ function wrapToStrips(text, targetStripCount) {
     return strips;
 }
 
-/**
- * Adds random spacing between words and at the start.
- */
+/** @param {string} strip @param {number} randomMax - Applies random leading and inter-word spacing up to `randomMax` extra spaces. @returns {string} */
 function applyRandomSpacing(strip, randomMax) {
     const words = strip.split(' ').filter(w => w.length > 0);
     if (words.length === 0) return strip;
 
-    let result = '';
-    const startOffset = Math.floor(Math.random() * (randomMax + 1));
-    result += ' '.repeat(startOffset);
-
+    let result = ' '.repeat(Math.floor(Math.random() * (randomMax + 1)));
     for (let i = 0; i < words.length; i++) {
         result += words[i];
         if (i < words.length - 1) {
-            const midOffset = 1 + Math.floor(Math.random() * (randomMax + 1));
-            result += ' '.repeat(midOffset);
+            result += ' '.repeat(1 + Math.floor(Math.random() * (randomMax + 1)));
         }
     }
     return result;
 }
 
+/** @param {string} text @param {number|null} stripCount @param {boolean|null} addSeparator @param {number|null} randomMax @param {boolean|null} isBase64 - Renders text in vertical (1-char-per-row) or multi-strip format. @returns {string} */
 function verticalize(text, stripCount=null, addSeparator=null, randomMax=null, isBase64=null) {
-    // Clean tabs to double spaces
     const cleanText = text.replace(/\t/g, '  ');
-
     let processedText = cleanText;
 
     if (isBase64) {
@@ -129,12 +112,7 @@ function verticalize(text, stripCount=null, addSeparator=null, randomMax=null, i
         processedText = virtualizeWords(processedText);
     }
 
-    let strips;
-    if (stripCount) {
-        strips = wrapToStrips(processedText, stripCount);
-    } else {
-        strips = processedText.split('\n');
-    }
+    let strips = stripCount ? wrapToStrips(processedText, stripCount) : processedText.split('\n');
 
     if (randomMax !== null) {
         strips = strips.map(strip => applyRandomSpacing(strip, randomMax));
@@ -142,52 +120,56 @@ function verticalize(text, stripCount=null, addSeparator=null, randomMax=null, i
 
     const maxLength = Math.max(...strips.map(s => s.length));
     let output = '';
-
     for (let i = 0; i < maxLength; i++) {
         let row = '';
         for (let j = 0; j < strips.length; j++) {
-            const strip = strips[j];
-            row += (strip[i] || ' ');
-
-            if (addSeparator && j < strips.length - 1) {
-                row += ' ';
-            }
+            row += (strips[j][i] || ' ');
+            if (addSeparator && j < strips.length - 1) row += ' ';
         }
         output += row.trimEnd() + '\n';
     }
-
     return output;
 }
 
-/**
- * Creates a runnable vertical JS "Mordor" file using start and end templates.
- */
+/** @param {string} text - Puts each character on its own line (strips all existing newlines first). @returns {string} */
+function verticalizeRaw(text) {
+  return text
+    .replace(/\t/g, '  ')
+    .replace(/\r/g, '')
+    .replace(/\n/g, '')
+    .split('')
+    .join('\n') + '\n';
+}
+
+/** @param {string} jsCode - Encodes and verticalizes JS source into a self-executing 1W MordorJS file. Detects shebang and `require` usage to build the minimal non-1W prefix. @returns {string} */
 function generateMordorJS(jsCode) {
     const startVert = codeBegin();
     const endVert = codeEnd();
 
-    // Encode special chars before verticalizing:
-    // backslash → \x1d (must be FIRST to avoid double-encoding)
-    // newline   → \x1e (structural \n from verticalize won't be confused with original)
-    // backtick  → \x1f (avoid breaking template literal T)
-    const escapedCode = jsCode
-      .replace(/^#!.*\n/, '')   // strip shebang (new Function() doesn't handle it)
-      .replace(/\r/g, '')        // normalize line endings
-      .replace(/\\/g, '\x1d')   // encode backslash (MUST be first!)
-      .replace(/\n/g, '\x1e')   // encode newline
-      .replace(/`/g, '\x1f')    // encode backtick
+    const hasShebang = jsCode.startsWith('#!');
+    const strippedCode = jsCode
+      .replace(/^#!.*\n/, '')
+      .replace(/\r/g, '');
+
+    const hasRequire = /\brequire\s*\(/.test(strippedCode);
+
+    const escapedCode = strippedCode
+      .replace(/\\/g, '\x1d')
+      .replace(/\n/g, '\x1e')
+      .replace(/`/g, '\x1f')
     ;
 
-    // Verticalize the escaped code
     const verticalizedCode = verticalizeRaw(escapedCode);
 
-    // return verticalizedCode;
-    // Prefix: runs in mm.js's CJS module scope (where require IS available),
-    // sets it on global so that F(M)() can access it in global scope.
-    const prefix = 'global.require=require;\n';
+    const prefix = [
+      hasShebang ? '#!/usr/bin/env node'    : '',
+      hasRequire ? 'global.require=require;' : '',
+    ].filter(Boolean).join('\n') + (hasShebang || hasRequire ? '\n' : '');
+
     return prefix + startVert + verticalizedCode + endVert;
 }
 
+/** CLI entry point — parses argv and dispatches to `verticalize` or `generateMordorJS`. */
 function main() {
     const args = process.argv.slice(2);
     let stripCount = null;

@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 const MDJS = "M||D||JS";
 
 //some remmark
