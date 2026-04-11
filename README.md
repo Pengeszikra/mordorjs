@@ -1,44 +1,27 @@
-# M||D||JS = mordor.js
+## What I Built
+Everybody knows that productivity is measured in LOC. The more lines of code you produce, the more serious your project must be. Clean, readable code matters too, of course. And surely you remember the old convention that a line should stay under 80 characters.
 
-The only rule is: 1 char wide JS code
+We chose to move beyond that.
 
-## mordor code
+In mordor.js, there is only one rule:
 
-```
-V r w
-e e i
-r a t
-t d h
-i a
-c b f
-a l r
-l e e
-    e
-r c
-e o
-a d s
-d e p
-a   a
-b f c
-l o i
-e r n
-  m g
-  a .
-  t
-```
+the maximum line length is 1.
 
-## mordor projec
+That is all.
 
-```
-D 
-e l
-s a
-c t
-r e
-i r
-b
-e
-```
+Simple, isn’t it?
+
+## 1D programming language
+Because the whole codebase is a single vertical line, it comes with many advantages:
+
+- Long lines are no longer a problem
+- AI has a much harder time reading your code
+- Your editor width becomes irrelevant
+- Horizontal scrolling is gone forever
+- Screenshot-based code theft becomes much less practical
+- Your daily LOC can grow to legendary numbers
+- Code review becomes an act of courage
+
 
 ## Usage
 

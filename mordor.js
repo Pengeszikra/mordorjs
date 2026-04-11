@@ -7,8 +7,10 @@
  * Each input line (or wrapped strip) becomes a 1-character wide column.
  */
 
-const fs = require('fs');
-const { spawnSync } = require('child_process');
+import fs from 'fs';
+import { spawnSync } from 'child_process';
+
+const [ALIAS_BACKSLASH, ALIAS_BACKTICK, ALIAS_NEWLINE] = `…¬´`;
 
 /**
  * Copies text to the system clipboard based on the platform.
@@ -154,8 +156,8 @@ function verticalize(text, stripCount=null, addSeparator=null, randomMax=null, i
  * Creates a runnable vertical JS "Mordor" file using start and end templates.
  */
 function generateMordorJS(jsCode) {
-    const startPath = 'tomojs1.js';
-    const endPath = 'tomojs2.js';
+    const startPath = 'code-begin.js';
+    const endPath = 'code-end.js';
 
     if (!fs.existsSync(startPath) || !fs.existsSync(endPath)) {
         throw new Error(`Required template files ${startPath} or ${endPath} not found.`);
@@ -164,19 +166,27 @@ function generateMordorJS(jsCode) {
     const startTemplate = fs.readFileSync(startPath, 'utf8');
     const endTemplate = fs.readFileSync(endPath, 'utf8');
 
-    // Normalize newlines, tabs, and escape backticks (backtick -> 0x1F)
+    // Encode special chars before verticalizing:
+    // backslash → \x1d (must be FIRST to avoid double-encoding)
+    // newline   → \x1e (structural \n from verticalize won't be confused with original)
+    // backtick  → \x1f (avoid breaking template literal T)
     const escapedCode = jsCode
-      .replace(/`/g, '\x1f')
-      // .replace(/(.+)[^;]\n/g,'$1;\n')
+      .replace(/^#!.*\n/, '')   // strip shebang (new Function() doesn't handle it)
+      .replace(/\r/g, '')        // normalize line endings
+      // .replace(/\\/g, '\x1d')   // encode backslash
+      .replace(/\n/g, '¬')   // encode newline
+      .replace(/`/g, '´')    // encode backtick
     ;
 
     // Verticalize the escaped code
-    const verticalizedCode = verticalize(escapedCode,1);
-    const startVert = verticalize(startTemplate,1);
-    const endVert = verticalize(endTemplate,1);
+    const verticalizedCode = verticalizeRaw(escapedCode);
+    const startVert = verticalizeRaw(startTemplate);
+    const endVert = verticalizeRaw(endTemplate);
 
     // return verticalizedCode;
-    // Concatenate the fragments
+    // Prefix: runs in mm.js's CJS module scope (where require IS available),
+    // sets it on global so that F(M)() can access it in global scope.
+    // const prefix = 'global.require=require;\n';
     return startVert + verticalizedCode + endVert;
 }
 
@@ -249,6 +259,15 @@ function main() {
         console.log("Usage: node mordor.js [-w|--wide number] [-s] [-c|--copy] [-r|--random [number]] [-b64|--base64] [-mjs] [file]");
         process.exit(1);
     }
+}
+
+function verticalizeRaw(text) {
+  return text
+    .replace(/\t/g, '  ')
+    .replace(/\r/g, '')
+    .replace(/\n/g, '')
+    .split('')
+    .join('\n') + '\n';
 }
 
 main();
