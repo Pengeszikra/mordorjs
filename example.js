@@ -1,19 +1,18 @@
-c
-o
-n
-s
-o
-l
-e
-.
-l
-o
-g
-(
-1
-2
-3
-7
-9
-)  
-;
+#!/usr/bin/env node
+
+const MDJS = "M||D||JS";
+
+//some remmark
+
+console.log(`
+
+
+  --${MDJS}--
+
+
+  -----------
+     hello
+  -----------
+`);
+
+console.log(" Another message");
