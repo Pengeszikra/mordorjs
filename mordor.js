@@ -1,16 +1,15 @@
-#!/usr/bin/env node
-
 /**
- * MordorJS - One Program to Rule Them All
+ * MordorJS - the world first real 1D programming language
  *
- * This program transforms input text into vertical columns.
- * Each input line (or wrapped strip) becomes a 1-character wide column.
+ * this program can generate mordorjs code as .cjs file
+ * this program can generate mordor-code
+ * this program can generate mordor-porject
  */
 
-import fs from 'fs';
-import { spawnSync } from 'child_process';
+const fs = require('fs');
+const { spawnSync } = require('child_process');
 
-const [ALIAS_BACKSLASH, ALIAS_BACKTICK, ALIAS_NEWLINE] = `…¬´`;
+const [ALIAS_BACKSLASH, ALIAS_BACKTICK, ALIAS_NEWLINE] = `\x1d\x1e\x1f`;
 
 /**
  * Copies text to the system clipboard based on the platform.
@@ -173,9 +172,9 @@ function generateMordorJS(jsCode) {
     const escapedCode = jsCode
       .replace(/^#!.*\n/, '')   // strip shebang (new Function() doesn't handle it)
       .replace(/\r/g, '')        // normalize line endings
-      // .replace(/\\/g, '\x1d')   // encode backslash
-      .replace(/\n/g, '¬')   // encode newline
-      .replace(/`/g, '´')    // encode backtick
+      .replace(/\\/g, '\x1d')   // encode backslash (MUST be first!)
+      .replace(/\n/g, '\x1e')   // encode newline
+      .replace(/`/g, '\x1f')    // encode backtick
     ;
 
     // Verticalize the escaped code
@@ -186,8 +185,8 @@ function generateMordorJS(jsCode) {
     // return verticalizedCode;
     // Prefix: runs in mm.js's CJS module scope (where require IS available),
     // sets it on global so that F(M)() can access it in global scope.
-    // const prefix = 'global.require=require;\n';
-    return startVert + verticalizedCode + endVert;
+    const prefix = 'global.require=require;\n';
+    return prefix + startVert + verticalizedCode + endVert;
 }
 
 function main() {

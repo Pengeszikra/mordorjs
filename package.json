@@ -3,7 +3,6 @@
   "version": "0.0.1",
   "description": "One Program to Rule Them All",
   "main": "mordor.js",
-  "type": "module",
   "bin": {
     "mordorjs": "mordor.js"
   },

@@ -1,4 +1,3 @@
-[,w,,B,,Q]=`…¬´`;
 [,c,,e,,f,,h,,i,,j,,l,,m,,n,,o,,p,,r,,s,,t,,u,,a,,d,,g,,S,,C,,X,,Y,,Z,,D]=`cefhijlmnoprstuadgSC() .`;
 A=9+1;
 O=s+o+r+t;
@@ -9,4 +8,7 @@ F=[][O][K];
 R=r+e+t+u+r+n+Z+S+t+r+i+n+g+D+f+r+o+m+C+h+a+r+C+o+d+e+X;
 E=[]+[];
 N=``;
+w=F(R+(A*3-1)+Y)();
+B=F(R+A*3+Y)();
+Q=F(R+(A*3+1)+Y)();
 T=`
