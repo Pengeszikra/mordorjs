@@ -1,12 +1,19 @@
 {
   "name": "mordorjs",
   "version": "0.0.1",
-  "description": "One Program to Rule Them All",
+  "description": "is a toolkit for first real 1D programming language and so much more",
   "main": "mordor.js",
   "bin": {
-    "mordorjs": "mordor.js"
+    "mordorjs": "bin/mordorjs.cjs"
   },
+  "files": [
+    "bin/",
+    "mordor.js",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
+    "build": "mkdir -p bin && node mordor.js mordor.js --mordorjs > bin/mordorjs.cjs && chmod +x bin/mordorjs.cjs",
     "test": "node mordor.js mordor.js -w 61 -s -c -r 4"
   },
   "repository": {
@@ -18,10 +25,21 @@
     "obfuscation",
     "mordor",
     "column",
-    "cli"
+    "cli",
+    "javascript",
+    "1d",
+    "one-dimensional",
+    "esolang",
+    "SAURON",
+    "Survivor",
+    "Agentic",
+    "Unit",
+    "Resistance",
+    "Operations",
+    "Network"
   ],
   "author": "Peter Vivo",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/Pengeszikra/mordorjs/issues"
   },

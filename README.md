@@ -1,6 +1,6 @@
 # mordor.js
 
-`mordor.js` is a toolkit and npm module around the Mordor file formats and 1W-style JavaScript transformations.
+`mordor.js` is a toolkit and npm module around the Mordor file formats and 1W-style JavaScript transformations, also able to create modor-code and mordor-project files.
 
 ## What I Built
 Everybody knows that productivity is measured in LOC. The more lines of code you produce, the more serious your project must be. Clean, readable code matters too, of course. And surely you remember the old convention that a line should stay under 80 characters.
