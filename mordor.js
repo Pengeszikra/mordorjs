@@ -9,6 +9,14 @@
 const fs = require('fs');
 const { spawnSync } = require('child_process');
 
+function codeBegin() {
+  return Buffer.from('WwosCmMKLAosCmUKLAosCmYKLAosCmgKLAosCmkKLAosCmoKLAosCmwKLAosCm0KLAosCm4KLAosCm8KLAosCnAKLAosCnIKLAosCnMKLAosCnQKLAosCnUKLAosCmEKLAosCmQKLAosCmcKLAosClMKLAosCkMKLAosClgKLAosClkKLAosCloKLAosCkQKXQo9CmAKYwplCmYKaAppCmoKbAptCm4KbwpwCnIKcwp0CnUKYQpkCmcKUwpDCigKKQogCi4KYAo7CkEKPQo5CisKMQo7Ck8KPQpzCisKbworCnIKKwp0CjsKSwo9CmMKKwpvCisKbgorCnMKKwp0CisKcgorCnUKKwpjCisKdAorCm8KKwpyCjsKUAo9CnMKKwpwCisKbAorCmkKKwp0CjsKSgo9CmoKKwpvCisKaQorCm4KOwpGCj0KWwpdClsKTwpdClsKSwpdCjsKUgo9CnIKKwplCisKdAorCnUKKwpyCisKbgorCloKKwpTCisKdAorCnIKKwppCisKbgorCmcKKwpECisKZgorCnIKKwpvCisKbQorCkMKKwpoCisKYQorCnIKKwpDCisKbworCmQKKwplCisKWAo7CkUKPQpbCl0KKwpbCl0KOwpOCj0KYApgCjsKdwo9CkYKKApSCisKKApBCioKMwotCjEKKQorClkKKQooCikKOwpCCj0KRgooClIKKwpBCioKMworClkKKQooCikKOwpRCj0KRgooClIKKwooCkEKKgozCisKMQopCisKWQopCigKKQo7ClQKPQpgCg==','base64').toString();
+}
+
+function codeEnd() {
+  return Buffer.from('YAo7CkcKPQpGCigKUgorCkEKKwpZCikKKAopCjsKTQo9ClQKWwpQCl0KKApHCikKWwpKCl0KKApFCikKOwpWCj0KRgooClIKKwooCkEKKgo5CisKNgopCisKWQopCigKKQo7ClcKPQpGCigKUgorCigKQQoqCjkKKwoyCikKKwpZCikKKAopCjsKTQo9Ck0KWwpQCl0KKApRCikKWwpKCl0KKApWCikKWwpQCl0KKAp3CikKWwpKCl0KKApXCikKWwpQCl0KKApCCikKWwpKCl0KKApHCikKOwpGCigKTQopCigKKQo7Cg==','base64').toString();
+}
+
 const [ALIAS_BACKSLASH, ALIAS_BACKTICK, ALIAS_NEWLINE] = `\x1d\x1e\x1f`;
 
 /**
@@ -155,15 +163,8 @@ function verticalize(text, stripCount=null, addSeparator=null, randomMax=null, i
  * Creates a runnable vertical JS "Mordor" file using start and end templates.
  */
 function generateMordorJS(jsCode) {
-    const startPath = 'code-begin.js';
-    const endPath = 'code-end.js';
-
-    if (!fs.existsSync(startPath) || !fs.existsSync(endPath)) {
-        throw new Error(`Required template files ${startPath} or ${endPath} not found.`);
-    }
-
-    const startTemplate = fs.readFileSync(startPath, 'utf8');
-    const endTemplate = fs.readFileSync(endPath, 'utf8');
+    const startVert = codeBegin();
+    const endVert = codeEnd();
 
     // Encode special chars before verticalizing:
     // backslash → \x1d (must be FIRST to avoid double-encoding)
@@ -179,8 +180,6 @@ function generateMordorJS(jsCode) {
 
     // Verticalize the escaped code
     const verticalizedCode = verticalizeRaw(escapedCode);
-    const startVert = verticalizeRaw(startTemplate);
-    const endVert = verticalizeRaw(endTemplate);
 
     // return verticalizedCode;
     // Prefix: runs in mm.js's CJS module scope (where require IS available),
