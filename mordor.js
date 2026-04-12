@@ -3,6 +3,7 @@
 /** MordorJS - the world's first real 1W (1-character-wide) programming language. Transforms any JS file into a vertical, executable format where each character occupies its own line. */
 
 const fs = require('fs');
+const path = require('path');
 const { spawnSync } = require('child_process');
 
 /** @returns {string} Verticalized `code-begin.js` (base64-embedded), opens the T template literal and defines single-char variable bindings. */
@@ -169,7 +170,78 @@ function generateMordorJS(jsCode) {
     return prefix + startVert + verticalizedCode + endVert;
 }
 
-/** CLI entry point — parses argv and dispatches to `verticalize` or `generateMordorJS`. */
+/** @param {string} rootDir - Recursively walks a directory tree, returns sorted absolute file paths. Skips `node_modules`, hidden files/dirs, and lock files. @returns {string[]} */
+function walkProjectTree(rootDir) {
+    const SKIP_DIRS = new Set(['node_modules', '.git', '.svn', '.hg', '.cache', '.next', '.nuxt', 'dist', 'build', 'coverage']);
+    const SKIP_FILES = new Set(['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'bun.lockb', 'composer.lock', 'Gemfile.lock', 'poetry.lock']);
+    const results = [];
+    function walk(dir) {
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        entries.sort((a, b) => a.name.localeCompare(b.name));
+        for (const entry of entries) {
+            if (entry.name.startsWith('.')) continue;
+            if (SKIP_DIRS.has(entry.name)) continue;
+            if (SKIP_FILES.has(entry.name)) continue;
+            const fullPath = path.join(dir, entry.name);
+            if (entry.isDirectory() || (entry.isSymbolicLink() && fs.statSync(fullPath).isDirectory())) {
+                walk(fullPath);
+            } else if (entry.isFile() || entry.isSymbolicLink()) {
+                results.push(fullPath);
+            }
+        }
+    }
+    walk(rootDir);
+    return results;
+}
+
+const BINARY_EXTENSIONS = new Set([
+    '.png','.jpg','.jpeg','.gif','.ico','.webp','.bmp','.tiff',
+    '.pdf','.zip','.tar','.gz','.bz2','.7z','.rar',
+    '.woff','.woff2','.ttf','.otf','.eot',
+    '.mp3','.mp4','.avi','.mov','.wav','.ogg','.webm',
+    '.exe','.dll','.so','.dylib','.bin','.class','.pyc',
+]);
+
+/** @param {string} filePath - Returns true if the file extension is a known binary type. @returns {boolean} */
+function isBinaryExtension(filePath) {
+    return BINARY_EXTENSIONS.has(path.extname(filePath).toLowerCase());
+}
+
+const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png']);
+const IMAGE_PREVIEW_BYTES = 1024;
+
+/** @param {string} filePath - Returns true if the file is an image that should be truncated to 1KB preview. @returns {boolean} */
+function isPreviewImage(filePath) {
+    return IMAGE_EXTENSIONS.has(path.extname(filePath).toLowerCase());
+}
+
+/** @param {string} reversedPath @param {number} targetWidth - Generates a mordor-project header padded to targetWidth with underscores. @returns {string} */
+function makeProjectHeader(reversedPath, targetWidth = 61) {
+    const available = targetWidth - reversedPath.length - 2;
+    const left = Math.max(4, Math.ceil(available / 2));
+    const right = Math.max(4, available - left);
+    return '_'.repeat(left) + ' ' + reversedPath + ' ' + '_'.repeat(right);
+}
+
+const HELP_HEADER = '==== M||D||JS ====\n';
+const HELP_BODY = `
+Usage: mordorjs [options] [file]
+
+Options:
+  -w, --wide <num>      Wrap output into N vertical columns
+  -s                    Add separator spaces between columns
+  -r, --random [num]    Add random spacing between words (default max: 3)
+  -b64, --base64        Base64-encode input before rendering
+  -c, --copy            Copy output to system clipboard
+  -mjs, --mordorjs      Convert JS file to self-executing 1W .cjs program
+  -pro, --project       Package entire folder tree into a mordor-project file
+                        (skips node_modules, hidden files, lock files;
+                         images truncated to 1KB preview)
+  -h, --help            Show this help in mordor-code format (-w 31 -r 3 -s)
+  -ai-h, --ai-help      Show this help in plain text
+`;
+
+/** CLI entry point — parses argv and dispatches to `verticalize`, `generateMordorJS`, or `buildMordorProject`. */
 function main() {
     const args = process.argv.slice(2);
     let stripCount = null;
@@ -178,10 +250,17 @@ function main() {
     let randomMax = null;
     let isBase64 = false;
     let isMordorJS = false;
+    let isProject = false;
     let filePath = null;
 
     for (let i = 0; i < args.length; i++) {
-        if (args[i] === '-w' || args[i] === '--wide') {
+        if (args[i] === '-h' || args[i] === '--help') {
+            process.stdout.write(HELP_HEADER + verticalize(HELP_BODY, 31, true, 3));
+            process.exit(0);
+        } else if (args[i] === '-ai-h' || args[i] === '--ai-help') {
+            process.stdout.write(HELP_HEADER + HELP_BODY);
+            process.exit(0);
+        } else if (args[i] === '-w' || args[i] === '--wide') {
             stripCount = parseInt(args[i + 1], 10);
             i++;
         } else if (args[i] === '-s') {
@@ -192,6 +271,8 @@ function main() {
             isBase64 = true;
         } else if (args[i] === '-mjs' || args[i] === '--mordorjs') {
             isMordorJS = true;
+        } else if (args[i] === '-pro' || args[i] === '--project') {
+            isProject = true;
         } else if (args[i] === '-r' || args[i] === '--random') {
             const nextArg = args[i + 1];
             if (nextArg && !isNaN(parseInt(nextArg, 10)) && !nextArg.startsWith('-')) {
@@ -218,7 +299,40 @@ function main() {
         }
     };
 
-    if (filePath) {
+    if (isProject) {
+        const rootDir = filePath || '.';
+        try {
+            const absRoot = path.resolve(rootDir);
+            const files = walkProjectTree(absRoot);
+            const strips = stripCount || 31;
+            const targetWidth = strips * 2 - 1;
+            let clipboard = shouldCopy ? '' : null;
+            for (const fp of files) {
+                const relativePath = path.relative(absRoot, fp).replace(/\\/g, '/');
+                const reversedPath = relativePath.split('').reverse().join('');
+                const header = makeProjectHeader(reversedPath, targetWidth) + '\n';
+
+                let content;
+                if (isPreviewImage(fp)) {
+                    const buf = fs.readFileSync(fp).slice(0, IMAGE_PREVIEW_BYTES);
+                    content = virtualizeWords(buf.toString('base64'));
+                } else if (isBinaryExtension(fp)) {
+                    const b64 = fs.readFileSync(fp).toString('base64');
+                    content = virtualizeWords(b64);
+                } else {
+                    content = fs.readFileSync(fp, 'utf8');
+                }
+                const payload = verticalize(content, strips, addSeparator, randomMax, false);
+                const entry = header + payload;
+                process.stdout.write(entry);
+                if (clipboard !== null) clipboard += entry;
+            }
+            if (clipboard) copyToClipboard(clipboard);
+        } catch (err) {
+            console.error(`Error building project: ${err.message}`);
+            process.exit(1);
+        }
+    } else if (filePath) {
         try {
             const data = fs.readFileSync(filePath, 'utf8');
             processResult(data);
