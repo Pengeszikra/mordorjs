@@ -1,6 +1,6 @@
 {
   "name": "mordorjs",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "is a toolkit for first real 1D programming language and so much more",
   "main": "mordor.js",
   "bin": {

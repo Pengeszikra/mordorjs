@@ -32,6 +32,12 @@ Because the whole codebase is a single vertical line, it comes with many advanta
 <!-- Show us the code! You can embed a GitHub repo directly into your post. -->
 https://github.com/Pengeszikra/mordorjs
 
+> npm module
+```sh
+npm install -g mordorjs
+```
+https://www.npmjs.com/package/mordorjs
+
 ## Secret ingredient
 ```javascript
 /** @type {string[]} - Character map, for example: c = 'c', D = '.' */
@@ -81,7 +87,6 @@ W=F(R+(A*9+2)+Y)();
 M=M[P](Q)[J](V)[P](w)[J](W)[P](B)[J](G);
 /* Execute the normalized JS source: Function(M)(); */
 F(M)();
-
 ```
 
 ## How I Built It
@@ -95,6 +100,94 @@ video: seadance 2.0
 ```
 node mordor.js mordor.js --mordorjs > bin/mordor.cjs
 ```
+That means the project can already rebuild itself using its own transformation model.
+
+## The next phase
+This short fragment shows how the language begins.
+The extra `,` characters are used to avoid unwanted vertical string `\n` artifacts.
+```javascript
+[
+,
+c
+,
+,
+e
+,
+,
+f
+,
+,
+h
+]
+=
+`
+c
+e
+f
+h
+`
+;
+```
+
+From there, our resistance developers found a key survival technique for an age in which the AI threat was rising too quickly.
+
+The next logical step was a human-read-first carrier format:
+
+## mordor-code
+mordor-code is a multiline vertical stream format.
+
+It is designed to be read vertically, not horizontally. It may be compact, or it may contain extra space-filled columns between letters and symbols. Tabs are not allowed, and multi-width characters should be avoided. In generated output, tabs are normalized to two spaces.
+
+In mordor-code, newline may also be represented explicitly as ¬ when needed.
+
+Because spacing inside the vertical stream is flexible, mordor-code can carry not only source-like content, but also human-only hints, hidden notes, and decorative structures embedded directly into the layout.
+
+And for the example block, this would fit well:
+
+> A small mordor-code example:
+```mordor-code
+T  i  i  c  p     b     
+h  m  n  a  a     u     b
+i  p  f  n  r  a  t  r  e
+s  o  o  n  s  i     e
+   r  r  o  e     y  a  r
+   t  m  t     a  u  d  e
+   a  a     t  g  o  !  a
+   n  t  b  h  e        d
+   t  i  e     n  c     y
+      o        t  a     !
+      n        s  n     !
+               !
+```
+
+## mordor-project
+As of v0.0.2, mordorjs can also generate a mordor-project file.
+
+A mordor-project is a single text container that can carry an entire project tree in one file.
+
+Each embedded file is stored as:
+
+a header line
+followed by a vertical payload block
+
+For now, the project payload is carried in base64-rendered mordor form, which makes recovery safer for all file types, including indentation-sensitive and binary content.
+
+### definition
+```
+entry :=
+  header newline payload
+
+header :=
+  /^_{4,}\s(.+)\s_{4,}$/
+
+header content :=
+  <reverse-coding-info>::<reverse-path>
+
+payload :=
+  all following lines until next header or EOF
+```
+
+Do not miss the demo vide where you can watch the mordor-project creation process.
 
 ## Prize Category
 <!-- If you are submitting for a specific prize category (Best Google AI Usage, Best Ode to Larry Masinter, or Community Favorite), tell us which one and why! -->
